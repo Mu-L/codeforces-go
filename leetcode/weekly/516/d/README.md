@@ -94,7 +94,7 @@ class Solution {
         Map<Integer, Integer> cnt = new HashMap<>();
         int l = 0;
         for (int i = 0; i < n; i++) {
-            cnt.merge(nums[i], 1, Integer::sum); // ++cnt[x]
+            cnt.merge(nums[i], 1, Integer::sum); // ++cnt[nums[i]]
             while (cnt.size() >= k) {
                 int c = cnt.merge(nums[l], -1, Integer::sum); // c = --cnt[nums[l]]
                 if (c == 0) {
@@ -111,10 +111,10 @@ class Solution {
 
 ```cpp [sol-C++]
 class Solution {
+    static inline mt19937_64 rng = mt19937_64(chrono::steady_clock::now().time_since_epoch().count());
+
 public:
     vector<bool> validSubarrays(vector<int>& nums, int k, vector<vector<int>>& queries) {
-        mt19937_64 rng(chrono::steady_clock::now().time_since_epoch().count());
-
         int n = nums.size();
         vector<uint64_t> sum(n + 1);
         unordered_map<int, uint64_t> hash;
@@ -215,7 +215,7 @@ func validSubarrays(nums []int, k int, queries [][]int) []bool {
 
 做法同 [HH 的项链](https://www.luogu.com.cn/problem/P1972)，原理如下：
 
-从左到右遍历 $\textit{nums}$，如果固定子数组右端点为 $i$，要想让子数组包含某个元素 $x$，左端点必须 $\le x\ 最后一次出现的位置$。我们可以把最近一次出现的 $x$ 视作 $1$，其余更靠左的 $x$ 视作 $0$，那么「子数组的不同元素个数」等价于「**子数组的和**」。由于数组元素会动态变化，需要用 [树状数组](https://leetcode.cn/problems/range-sum-query-mutable/solution/dai-ni-fa-ming-shu-zhuang-shu-zu-fu-shu-lyfll/) 维护。
+从左到右遍历 $\textit{nums}$，同时维护元素 $x$ 最近一次出现的下标 $\textit{last}[x]$。如果固定子数组右端点为 $i$，要想让子数组包含某个元素 $x$，左端点必须 $\le \textit{last}[x]$。把最近一次出现的 $x$ 视作 $1$，其余更靠左的 $x$ 视作 $0$，那么「子数组的不同元素个数」等价于「**子数组的和**」。由于数组元素会动态变化，需要用 [树状数组](https://leetcode.cn/problems/range-sum-query-mutable/solution/dai-ni-fa-ming-shu-zhuang-shu-zu-fu-shu-lyfll/) 维护。
 
 以 $\textit{nums}=[1,1,2,2,3,2]$ 为例：
 
@@ -279,7 +279,7 @@ class Solution:
         ans = [False] * len(queries)
         for r, x in enumerate(nums):
             if x in last:
-                t.update(last[x], -1)
+                t.update(last[x], -1)  # 撤销
             last[x] = r
             t.update(r, 1)
             for l, qid in groups[r]:
@@ -351,7 +351,7 @@ class Solution {
         for (int r = 0; r < n; r++) {
             int x = nums[r];
             if (last.containsKey(x)) {
-                t.update(last.get(x), -1);
+                t.update(last.get(x), -1); // 撤销
             }
             last.put(x, r);
             t.update(r, 1);
@@ -402,10 +402,10 @@ public:
 };
 
 class Solution {
+    static inline mt19937_64 rng = mt19937_64(chrono::steady_clock::now().time_since_epoch().count());
+
 public:
     vector<bool> validSubarrays(vector<int>& nums, int k, vector<vector<int>>& queries) {
-        mt19937_64 rng(chrono::steady_clock::now().time_since_epoch().count());
-
         int n = nums.size();
         vector<uint64_t> sum(n + 1);
         unordered_map<int, uint64_t> hash;
@@ -432,7 +432,7 @@ public:
         for (int r = 0; r < n; r++) {
             int x = nums[r];
             if (last.contains(x)) {
-                t.update(last[x], -1);
+                t.update(last[x], -1); // 撤销
             }
             last[x] = r;
             t.update(r, 1);
@@ -500,7 +500,7 @@ func validSubarrays(nums []int, k int, queries [][]int) []bool {
 	ans := make([]bool, len(queries))
 	for r, x := range nums {
 		if i, ok := last[x]; ok {
-			t.update(i, -1)
+			t.update(i, -1) // 撤销
 		}
 		last[x] = r
 		t.update(r, 1)
@@ -521,13 +521,13 @@ func validSubarrays(nums []int, k int, queries [][]int) []bool {
 
 使用异或哈希，算错的概率是多少？即子数组有元素出现奇数次，但异或和为 $0$。
 
-在随机情况下，每一位是互相独立的。单独讨论某个比特位。$m$ 个 $[0,1]$ 内的随机整数异或，有 $2^m$ 种情况，这等价于 $m$ 个元素的子集个数（选表示 $1$，不选表示 $0$）。由于从 $m$ 个元素中选偶数个元素的方案数是 $2^{m-1}$，所以异或和为 $0$ 的概率为 $\dfrac{2^{m-1}}{2^m} = \dfrac{1}{2}$，异或和为 $1$ 的概率也为 $\dfrac{1}{2}$。证明见 [从 n 个数中选奇数个数的方案数](https://zhuanlan.zhihu.com/p/1909852852114948837)。
+在随机情况下，每一位是互相独立的。单独讨论某个比特位。$m$ 个 $[0,1]$ 内的随机整数异或，有 $2^m$ 种情况，这可以与 $m$ 个元素的子集一一对应（选表示 $1$，不选表示 $0$）。由于从 $m$ 个元素中选偶数个元素的方案数是 $2^{m-1}$，所以异或和为 $0$ 的概率为 $\dfrac{2^{m-1}}{2^m} = \dfrac{1}{2}$，异或和为 $1$ 的概率也为 $\dfrac{1}{2}$。证明见 [从 n 个数中选奇数个数的方案数](https://zhuanlan.zhihu.com/p/1909852852114948837)。
 
-所以 $m$ 个数的异或和仍然可以视作一个 $[0,2^{64}-1]$ 内的随机整数。
+所以 $m$ 个 $[0,2^{64}-1]$ 内的随机整数的异或和仍然可以视作一个 $[0,2^{64}-1]$ 内的随机整数。
 
 如果区间内有 $0$ 个数出现奇数次，那么一定算对。
 
-如果区间内有 $m (m\ge 1)$ 个数出现奇数次，那么（单次询问）算错的概率为
+如果区间内有 $m\ (m\ge 1)$ 个数出现奇数次，那么（单次询问）算错的概率为
 
 $$
 P(m\ 个数的异或和 = 0) = \dfrac{1}{2^{64}}
@@ -542,6 +542,12 @@ $$
 这里用到了伯努利不等式 $(1+x)^q\ge 1+qx$。
 
 在 $q=10^5$ 的情况下，至少有一个询问算错的概率约为 $5.4\times 10^{-15}$，足以通过本题。
+
+## 思考题
+
+把题干中的「偶数」改成「奇数」，怎么做？
+
+解答见 [本题视频讲解](https://www.bilibili.com/video/BV18p846TEwX/)。
 
 ## 专题训练
 
