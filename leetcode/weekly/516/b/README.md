@@ -6,7 +6,7 @@ $$
 
 就是一段缺失的整数。
 
-本题只关注 $[\textit{lower}, \textit{upper}]$ 中的缺失段。我们可以先把 $\textit{lower}-1$ 和 $\textit{upper}+1$ 这两个数添加到 $\textit{nums}$ 中，排序，然后二分（或者遍历）找到这两个数的位置，按照上文的方法遍历即可。
+本题只关注在区间 $[\textit{lower}, \textit{upper}]$ 中的缺失整数。我们可以先把 $\textit{lower}-1$ 和 $\textit{upper}+1$ 这两个哨兵添加到 $\textit{nums}$ 中，排序，然后二分（或者遍历）找到哨兵的位置，按照上文的方法遍历即可。
 
 [本题视频讲解](https://www.bilibili.com/video/BV18p846TEwX/?t=50m30s)，欢迎点赞关注~
 
@@ -35,7 +35,7 @@ class Solution {
         Arrays.sort(a);
 
         int l = Arrays.binarySearch(a, lower);
-        if (l < 0) l = ~l;
+        if (l < 0) l = ~l; // 见 Arrays.binarySearch 源码
         int r = Arrays.binarySearch(a, upper + 1);
         if (r < 0) r = ~r;
 
