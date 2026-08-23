@@ -1,14 +1,217 @@
-⚠**注意**：目前数据有问题，正确代码无法通过。如果显示 `581 / 594` 通过，相当于通过了本题。
+本题实际上是两个独立的问题：
+
+1. 如何判断子数组每个数的频率（出现次数）都是偶数？
+2. 如何判断子数组恰好有 $k$ 个不同元素？
 
 ## 子数组每个数的频率都是偶数
 
-把 $\textit{nums}[i]$ 映射成一个 $[0,2^{64}-1]$ 内的随机整数。由于同一个数异或两次等于 $0$，异或偶数次也等于 $0$，所以「子数组每个数的频率都是偶数」等价于「**子数组的异或和为** $0$」。这个技巧叫做**异或哈希**。
+把 $\textit{nums}[i]$ 映射成一个 $[0,2^{64}-1]$ 内的随机整数。由于同一个数异或两次等于 $0$，异或偶数次也等于 $0$，所以「子数组每个数的频率都是偶数」等价于「**子数组的异或和为** $0$」。这个技巧叫做**异或哈希**（XOR hashing）。
 
 计算任意子数组的异或和可以用 [前缀和](https://leetcode.cn/problems/range-sum-query-immutable/solution/qian-zhui-he-ji-qi-kuo-zhan-fu-ti-dan-py-vaar/)。
 
+> **注**：在 $q=10^5$ 的情况下，至少有一个询问算错的概率约为 $5.4\times 10^{-15}$，足以通过本题。详见文末的分析。
+
 ## 子数组恰好有 k 个不同元素
 
-我们直接求出子数组有多少个不同元素。
+下面介绍两种方法。
+
+### 方法一：滑动窗口（在线回答询问）
+
+本题 $k$ 是固定的，我们可以在枚举子数组右端点 $r$ 的同时，维护子数组左端点的范围 $[\ell_1, \ell_2)$，使得子数组内恰好有 $k$ 个不同元素。
+
+可以用**滑动窗口**计算 $\ell_1$ 和 $\ell_2$，原理请看视频[【基础算法精讲 03】](https://www.bilibili.com/video/BV1hd4y1r7Gq/)。
+
+可以记录每个 $r$ 对应的 $\ell_1$ 和 $\ell_2$，保存在数组中。
+
+对于询问 $[\ell,r]$，判断 $\ell$ 是否在区间 $[\ell_1[r], \ell_2[r])$ 中。
+
+[本题视频讲解](https://www.bilibili.com/video/BV18p846TEwX/)，欢迎点赞关注~
+
+```py [sol-Python3]
+class Solution:
+    def validSubarrays(self, nums: list[int], k: int, queries: list[list[int]]) -> list[bool]:
+        n = len(nums)
+        s = [0] * (n + 1)
+        # 把 nums[i] 映射成一个随机的 uint64
+        mp = defaultdict(lambda: random.getrandbits(64))  # 或者 randrange(1 << 64)
+        for i, x in enumerate(nums):
+            s[i + 1] = s[i] ^ mp[x]
+
+        def calc_left(k: int) -> list[int]:
+            lefts = [0] * n
+            cnt = defaultdict(int)
+            l = 0
+            for i, x in enumerate(nums):
+                cnt[x] += 1
+                while len(cnt) >= k:
+                    v = nums[l]
+                    if cnt[v] > 1:
+                        cnt[v] -= 1
+                    else:
+                        del cnt[v]  # 保证 len(cnt) 是窗口内的不同元素个数
+                    l += 1
+                lefts[i] = l
+            return lefts
+
+        l1 = calc_left(k + 1)
+        l2 = calc_left(k)
+
+        return [s[r + 1] == s[l] and l1[r] <= l < l2[r] for l, r in queries]
+```
+
+```java [sol-Java]
+class Solution {
+    private static final Random random = new Random();
+
+    public boolean[] validSubarrays(int[] nums, int k, int[][] queries) {
+        int n = nums.length;
+        long[] sum = new long[n + 1];
+        Map<Integer, Long> hash = new HashMap<>();
+        for (int i = 0; i < n; i++) {
+            int x = nums[i];
+            // 把 nums[i] 映射成一个随机的 long
+            if (!hash.containsKey(x)) {
+                hash.put(x, random.nextLong());
+            }
+            sum[i + 1] = sum[i] ^ hash.get(x);
+        }
+
+        int[] l1 = calcLeft(nums, k + 1);
+        int[] l2 = calcLeft(nums, k);
+
+        boolean[] ans = new boolean[queries.length];
+        for (int i = 0; i < queries.length; i++) {
+            int l = queries[i][0];
+            int r = queries[i][1];
+            ans[i] = sum[r + 1] == sum[l] && l1[r] <= l && l < l2[r];
+        }
+        return ans;
+    }
+
+    private int[] calcLeft(int[] nums, int k) {
+        int n = nums.length;
+        int[] lefts = new int[n];
+        Map<Integer, Integer> cnt = new HashMap<>();
+        int l = 0;
+        for (int i = 0; i < n; i++) {
+            cnt.merge(nums[i], 1, Integer::sum); // ++cnt[x]
+            while (cnt.size() >= k) {
+                int c = cnt.merge(nums[l], -1, Integer::sum); // c = --cnt[nums[l]]
+                if (c == 0) {
+                    cnt.remove(nums[l]); // 保证 cnt.size() 是窗口内的不同元素个数
+                }
+                l++;
+            }
+            lefts[i] = l;
+        }
+        return lefts;
+    }
+}
+```
+
+```cpp [sol-C++]
+class Solution {
+public:
+    vector<bool> validSubarrays(vector<int>& nums, int k, vector<vector<int>>& queries) {
+        mt19937_64 rng(chrono::steady_clock::now().time_since_epoch().count());
+
+        int n = nums.size();
+        vector<uint64_t> sum(n + 1);
+        unordered_map<int, uint64_t> hash;
+        for (int i = 0; i < n; i++) {
+            int x = nums[i];
+            // 把 nums[i] 映射成一个随机的 uint64_t
+            if (!hash.contains(x)) {
+                hash[x] = rng();
+            }
+            sum[i + 1] = sum[i] ^ hash[x];
+        }
+
+        auto calc_left = [&](int k) -> vector<int> {
+            vector<int> lefts(n);
+            unordered_map<int, int> cnt;
+            int l = 0;
+            for (int i = 0; i < n; i++) {
+                cnt[nums[i]]++;
+                while (cnt.size() >= k) {
+                    auto it = cnt.find(nums[l]);
+                    if (--it->second == 0) {
+                        cnt.erase(it); // 保证 cnt.size() 是窗口内的不同元素个数
+                    }
+                    l++;
+                }
+                lefts[i] = l;
+            }
+            return lefts;
+        };
+
+        auto l1 = calc_left(k + 1);
+        auto l2 = calc_left(k);
+
+        vector<bool> ans(queries.size());
+        for (int i = 0; i < queries.size(); i++) {
+            auto& q = queries[i];
+            int l = q[0], r = q[1];
+            ans[i] = sum[r + 1] == sum[l] && l1[r] <= l && l < l2[r];
+        }
+        return ans;
+    }
+};
+```
+
+```go [sol-Go]
+func validSubarrays(nums []int, k int, queries [][]int) []bool {
+	n := len(nums)
+	sum := make([]uint64, n+1)
+	hash := map[int]uint64{}
+	for i, x := range nums {
+		// 把 nums[i] 映射成一个随机的 uint64
+		if _, ok := hash[x]; !ok {
+			hash[x] = rand.Uint64()
+		}
+		sum[i+1] = sum[i] ^ hash[x]
+	}
+
+	calcLeft := func(k int) []int {
+		lefts := make([]int, n)
+		cnt := map[int]int{}
+		l := 0
+		for i, x := range nums {
+			cnt[x]++
+			for len(cnt) >= k {
+				v := nums[l]
+				if cnt[v] > 1 {
+					cnt[v]--
+				} else {
+					delete(cnt, v) // 保证 len(cnt) 是窗口内的不同元素个数
+				}
+				l++
+			}
+			lefts[i] = l
+		}
+		return lefts
+	}
+
+	l1 := calcLeft(k + 1)
+	l2 := calcLeft(k)
+
+	ans := make([]bool, len(queries))
+	for i, p := range queries {
+		l, r := p[0], p[1]
+		ans[i] = sum[r+1] == sum[l] && l1[r] <= l && l < l2[r]
+	}
+	return ans
+}
+```
+
+#### 复杂度分析
+
+- 时间复杂度：$\mathcal{O}(n+q)$，其中 $n$ 是 $\textit{nums}$ 的长度，$q$ 是 $\textit{queries}$ 的长度。对于滑动窗口，虽然写了个二重循环，但是内层循环中对 $\ell$ 加一的**总**执行次数不会超过 $n$ 次，所以二重循环的循环次数为 $\mathcal{O}(n)$。
+- 空间复杂度：$\mathcal{O}(n)$。返回值不计入。
+
+### 方法二：树状数组（离线回答询问）
+
+更通用的做法是，直接求出子数组有多少个不同元素。即使题目把 $k$ 放在询问中，即 $\textit{queries}[i] = [l_i, r_i, k_i]$，这个做法也适用。
 
 做法同 [HH 的项链](https://www.luogu.com.cn/problem/P1972)，原理如下：
 
@@ -24,32 +227,6 @@
 - 遍历到 $i=5$，把 $\textit{nums}$ 视作 $[0,1,0,0,1,1]$。
 
 为了能在遍历到 $\textit{nums}[i]$ 时，回答 $r=i$ 的询问，我们需要提前把询问按照右端点分组，然后回答这一组内的询问。这个技巧叫做**离线询问**。
-
-## 概率分析
-
-使用异或哈希，算错的概率是多少？即子数组有元素出现奇数次，但异或和为 $0$。
-
-在随机情况下，每一位是互相独立的。单独讨论某个比特位。$m$ 个 $[0,1]$ 内的随机整数异或，有 $2^m$ 种情况，这等价于 $m$ 个元素的子集个数（选表示 $1$，不选表示 $0$）。由于从 $m$ 个元素中选偶数个元素的方案数是 $2^{m-1}$，所以异或和为 $0$ 的概率为 $\dfrac{2^{m-1}}{2^m} = \dfrac{1}{2}$，异或和为 $1$ 的概率也为 $\dfrac{1}{2}$。证明见 [从 n 个数中选奇数个数的方案数](https://zhuanlan.zhihu.com/p/1909852852114948837)。
-
-所以 $m$ 个数的异或和仍然可以视作一个 $[0,2^{64}-1]$ 内的随机整数。
-
-单次询问算错的概率为
-
-$$
-P(m\ 个数的异或和= 0) = \dfrac{1}{2^{64}}
-$$
-
-在有 $q$ 个询问的情况下，即使所有询问都互相独立，我们有
-
-$$
-P(至少一个询问算错) = 1 - P(所有询问都算对) = 1 - (1 - 2^{-64})^q \le 1 - (1 - q\cdot 2^{-64}) = q\cdot 2^{-64}
-$$
-
-这里用到了伯努利不等式 $(1+x)^q\ge 1+qx$。
-
-在 $q=10^5$ 的情况下，至少一个询问算错的概率约为 $5.4\times 10^{-15}$，足以通过本题。
-
-下午两点 [B站@灵茶山艾府](https://space.bilibili.com/206214) 直播讲题，欢迎关注~
 
 ```py [sol-Python3]
 # 模板来源 https://leetcode.cn/discuss/post/3583665/
@@ -87,8 +264,8 @@ class Solution:
     def validSubarrays(self, nums: list[int], k: int, queries: list[list[int]]) -> list[bool]:
         n = len(nums)
         s = [0] * (n + 1)
-        # 把 nums[i] 映射成一个随机的 uint63，方便底层用 long 保存
-        mp = defaultdict(lambda: random.getrandbits(63))
+        # 把 nums[i] 映射成一个随机的 uint64
+        mp = defaultdict(lambda: random.getrandbits(64))  # 或者 randrange(1 << 64)
         for i, x in enumerate(nums):
             s[i + 1] = s[i] ^ mp[x]
 
@@ -150,7 +327,7 @@ class Solution {
     public boolean[] validSubarrays(int[] nums, int k, int[][] queries) {
         int n = nums.length;
         long[] sum = new long[n + 1];
-        HashMap<Integer, Long> hash = new HashMap<>();
+        Map<Integer, Long> hash = new HashMap<>();
         for (int i = 0; i < n; i++) {
             int x = nums[i];
             // 把 nums[i] 映射成一个随机的 long
@@ -169,7 +346,7 @@ class Solution {
         }
 
         FenwickTree t = new FenwickTree(n);
-        HashMap<Integer, Integer> last = new HashMap<>(hash.size());
+        Map<Integer, Integer> last = HashMap.newHashMap(hash.size()); // 预分配空间
         boolean[] ans = new boolean[queries.length];
         for (int r = 0; r < n; r++) {
             int x = nums[r];
@@ -250,7 +427,7 @@ public:
 
         FenwickTree<int> t(n);
         unordered_map<int, int> last;
-        last.reserve(hash.size());
+        last.reserve(hash.size()); // 预分配空间
         vector<bool> ans(queries.size());
         for (int r = 0; r < n; r++) {
             int x = nums[r];
@@ -338,11 +515,38 @@ func validSubarrays(nums []int, k int, queries [][]int) []bool {
 #### 复杂度分析
 
 - 时间复杂度：$\mathcal{O}(n + q\log n)$，其中 $n$ 是 $\textit{nums}$ 的长度，$q$ 是 $\textit{queries}$ 的长度。
-- 空间复杂度：$\mathcal{O}(n+q)$。
+- 空间复杂度：$\mathcal{O}(n + q)$。
+
+## 附：算错的概率是多少？
+
+使用异或哈希，算错的概率是多少？即子数组有元素出现奇数次，但异或和为 $0$。
+
+在随机情况下，每一位是互相独立的。单独讨论某个比特位。$m$ 个 $[0,1]$ 内的随机整数异或，有 $2^m$ 种情况，这等价于 $m$ 个元素的子集个数（选表示 $1$，不选表示 $0$）。由于从 $m$ 个元素中选偶数个元素的方案数是 $2^{m-1}$，所以异或和为 $0$ 的概率为 $\dfrac{2^{m-1}}{2^m} = \dfrac{1}{2}$，异或和为 $1$ 的概率也为 $\dfrac{1}{2}$。证明见 [从 n 个数中选奇数个数的方案数](https://zhuanlan.zhihu.com/p/1909852852114948837)。
+
+所以 $m$ 个数的异或和仍然可以视作一个 $[0,2^{64}-1]$ 内的随机整数。
+
+如果区间内有 $0$ 个数出现奇数次，那么一定算对。
+
+如果区间内有 $m (m\ge 1)$ 个数出现奇数次，那么（单次询问）算错的概率为
+
+$$
+P(m\ 个数的异或和 = 0) = \dfrac{1}{2^{64}}
+$$
+
+在有 $q$ 个询问的情况下，即使所有询问都互相独立，我们有
+
+$$
+P(至少一个询问算错) = 1 - P(所有询问都算对) = 1 - (1 - 2^{-64})^q \le 1 - (1 - q\cdot 2^{-64}) = q\cdot 2^{-64}
+$$
+
+这里用到了伯努利不等式 $(1+x)^q\ge 1+qx$。
+
+在 $q=10^5$ 的情况下，至少有一个询问算错的概率约为 $5.4\times 10^{-15}$，足以通过本题。
 
 ## 专题训练
 
-见下面数据结构题单的「**§8.1 树状数组**」和「**专题：离线算法**」。
+1. 滑动窗口题单的「**二、不定长滑动窗口**」。
+2. 数据结构题单的「**§8.1 树状数组**」和「**专题：离线算法**」。
 
 ## 分类题单
 

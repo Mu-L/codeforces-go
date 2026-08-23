@@ -1,5 +1,3 @@
-下午两点 [B站@灵茶山艾府](https://space.bilibili.com/206214) 直播讲题，欢迎关注~
-
 ## 方法一：用字符串
 
 ```py [sol-Python3]
