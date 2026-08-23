@@ -4,7 +4,9 @@ $$
 [\textit{nums}[i-1] + 1, \textit{nums}[i]-1]
 $$
 
-就是一段缺失的整数。
+是一段缺失的整数。
+
+例如 $\textit{nums}[i-1] = 3$，$\textit{nums}[i] = 7$，那么 $[4,6]$ 是一段缺失的整数。
 
 本题只关注在区间 $[\textit{lower}, \textit{upper}]$ 中的缺失整数。我们可以先把 $\textit{lower}-1$ 和 $\textit{upper}+1$ 这两个哨兵添加到 $\textit{nums}$ 中，排序，然后二分（或者遍历）找到哨兵的位置，按照上文的方法遍历即可。
 
