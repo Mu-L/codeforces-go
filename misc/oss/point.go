@@ -72,7 +72,19 @@ func (p point) add(q point) point {
 	if !isLevelLooped {
 		return point{p.x + q.x, p.y + q.y, p.z + q.z}
 	}
+	// todo 取模很慢，换成 if
 	return point{(p.x + q.x + mapSizeN) % mapSizeN, (p.y + q.y + mapSizeM) % mapSizeM, p.z + q.z}
+}
+
+func (p point) sub(q point) point {
+	if !isLevelLooped {
+		return point{p.x - q.x, p.y - q.y, p.z - q.z}
+	}
+	return point{(p.x - q.x + mapSizeN) % mapSizeN, (p.y - q.y + mapSizeM) % mapSizeM, p.z - q.z}
+}
+
+func (p point) rev() point {
+	return point{-p.x, -p.y, -p.z}
 }
 
 func isNeighbor4(p, q point) bool {
@@ -105,13 +117,13 @@ func cmpPoint(a, b point) int {
 
 type pointWithDir struct {
 	point
-	// 镜子：高 4 位和低 4 位分别保存两个方向（0 ~ 5）
-	// 低位保存小的 dir-index，高位保存大的 dir-index
+	// 镜子：高 4 位和低 4 位分别保存两个方向（0 ~ 5）   低位保存小的 dir-index，高位保存大的 dir-index
+	// 光束：高 4 位是类型，低 4 位是方向
 	dir uint8
 }
 
 func (mirror *pointWithDir) reflectToAnotherDir(dir point) point {
-	revDir := point{-dir.x, -dir.y, -dir.z}
+	revDir := dir.rev()
 	d0, d1 := directions6[mirror.dir&0xf], directions6[mirror.dir>>4]
 	if d0 == revDir {
 		return d1
