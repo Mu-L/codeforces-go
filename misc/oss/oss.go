@@ -145,7 +145,7 @@ func initMap() {
 		sailorNum++
 	}
 
-	for _, grid := range levelMap {
+	checkGrid := func(grid []string) {
 		for _, row := range grid {
 			if len(row) != int(mapSizeM) {
 				panic("行不等长")
@@ -195,6 +195,12 @@ func initMap() {
 				}
 			}
 		}
+	}
+	if len(mapInWater) > 0 {
+		checkGrid(mapInWater)
+	}
+	for _, grid := range levelMap {
+		checkGrid(grid)
 	}
 
 	if warriorNum != warriorNumberInit {
@@ -1042,7 +1048,8 @@ func solveLevel() []string {
 	__goblins := goblinInitArr[:0]
 	__dragons := dragonInitArr[:0]
 	__beams := beamInitArr[:0]
-	for z, grid := range levelMap {
+
+	parseGrid := func(z int, grid []string) {
 		for x, row := range grid {
 			for y, ch := range row {
 				p := point{int8(x), int8(y), int8(z)}
@@ -1199,12 +1206,18 @@ func solveLevel() []string {
 				case 'f':
 					finals = append(finals, p)
 				case '.', '#', '~':
-					// pass
+					// ignore
 				default:
 					panic(fmt.Sprintf("不支持的符号 %c", ch))
 				}
 			}
 		}
+	}
+	if len(mapInWater) > 0 {
+		parseGrid(-1, mapInWater)
+	}
+	for z, grid := range levelMap {
+		parseGrid(z, grid)
 	}
 
 	// 有时候会手动添加 finals 的初始值，总体不一定是有序的
@@ -1419,7 +1432,7 @@ func solveLevel() []string {
 					}
 				}
 				if len(goblins) > 1 {
-					slices.SortFunc(goblins[:], cmpPointWithDir) // 一定要排序，不然状态数爆炸了
+					slices.SortFunc(goblins[:], cmpPointWithDir)
 				}
 			}
 
@@ -1450,7 +1463,7 @@ func solveLevel() []string {
 					}
 				}
 				if len(dragons) > 1 {
-					slices.SortFunc(dragons[:], cmpPointWithDir) // 一定要排序，不然状态数爆炸了
+					slices.SortFunc(dragons[:], cmpPointWithDir)
 				}
 			}
 
@@ -1642,7 +1655,7 @@ func solveLevel() []string {
 					break
 				}
 				if pre.info != "IGNORE" {
-					//fmt.Println(pre.stones) // DEBUG
+					//fmt.Println(pre.thief[0], pre.cleric[0]) // DEBUG
 					path = append(path, pre.info)
 				}
 			}
@@ -1971,7 +1984,7 @@ func solveLevel() []string {
 			withinBeams := d.withinBeams(p0, allNonChars)
 			for dIdx, dir := range directions4 {
 				newP := point{p0.x + dir.x, p0.y + dir.y, p0.z + dir.z}
-				if !d.isValidPos(newP) {
+				if !d.isValidPos(newP) || slices.Contains(allMovableObjs, newP) {
 					continue // 枚举另一个方向
 				}
 				newData := d
@@ -2149,6 +2162,8 @@ func solveLevel() []string {
 						}
 						newData.changePos(newP, nxt2, math.MaxUint8)
 					}
+				} else if slices.Contains(allMovableObjs, newP) {
+					continue
 				}
 
 				if mapSizeH > 1 {
@@ -2203,6 +2218,8 @@ func solveLevel() []string {
 						}
 						newData.changePos(newP, nxt2, math.MaxUint8)
 					}
+				} else if slices.Contains(allMovableObjs, newP) {
+					continue
 				}
 
 				if mapSizeH > 1 {
