@@ -32,8 +32,9 @@ class Solution:
     def validSubarrays(self, nums: list[int], k: int, queries: list[list[int]]) -> list[bool]:
         n = len(nums)
         s = [0] * (n + 1)
-        # 把 nums[i] 映射成一个随机的 uint64
-        mp = defaultdict(lambda: random.getrandbits(64))  # 或者 randrange(1 << 64)
+        # 把 nums[i] 映射成随机数
+        # 不要在 [0, 2**L) 内随机，见 https://codeforces.com/blog/entry/153335
+        mp = defaultdict(lambda: randrange(10 ** 18))
         for i, x in enumerate(nums):
             s[i + 1] = s[i] ^ mp[x]
 
@@ -264,8 +265,9 @@ class Solution:
     def validSubarrays(self, nums: list[int], k: int, queries: list[list[int]]) -> list[bool]:
         n = len(nums)
         s = [0] * (n + 1)
-        # 把 nums[i] 映射成一个随机的 uint64
-        mp = defaultdict(lambda: random.getrandbits(64))  # 或者 randrange(1 << 64)
+        # 把 nums[i] 映射成随机数
+        # 不要在 [0, 2**L) 内随机，见 https://codeforces.com/blog/entry/153335
+        mp = defaultdict(lambda: randrange(10 ** 18))
         for i, x in enumerate(nums):
             s[i + 1] = s[i] ^ mp[x]
 
