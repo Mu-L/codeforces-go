@@ -3,33 +3,28 @@ package main
 import (
 	. "fmt"
 	"io"
-	"slices"
 )
 
 // https://github.com/EndlessCheng
 func cf2244C(in io.Reader, out io.Writer) {
-	var T, n, x, y int
+	gcd := func(a, b int) int {
+		for a != 0 {
+			a, b = b%a, a
+		}
+		return b
+	}
+	var T, n, x, y, v int
 	for Fscan(in, &T); T > 0; T-- {
 		Fscan(in, &n, &x, &y)
-		a := make([]int, n)
-		for i := range a {
-			Fscan(in, &a[i])
-		}
-
-		g := gcd44(x, y)
-		for i := range g {
-			b := []int{}
-			for j := i; j < n; j += g {
-				b = append(b, a[j])
-			}
-			slices.Sort(b)
-			for j := i; j < n; j += g {
-				a[j] = b[0]
-				b = b[1:]
+		g := gcd(x, y)
+		ok := true
+		for i := 1; i <= n; i++ {
+			Fscan(in, &v)
+			if v%g != i%g {
+				ok = false
 			}
 		}
-
-		if slices.IsSorted(a) {
+		if ok {
 			Fprintln(out, "YES")
 		} else {
 			Fprintln(out, "NO")
@@ -38,4 +33,3 @@ func cf2244C(in io.Reader, out io.Writer) {
 }
 
 //func main() { cf2244C(bufio.NewReader(os.Stdin), os.Stdout) }
-func gcd44(a, b int) int { for a != 0 { a, b = b%a, a }; return b }
