@@ -67,7 +67,8 @@ type data struct {
 	grass grassArrType // w
 
 	// 水漂石
-	skippingStones skippingStoneArrType // k
+	skippingStones skippingStoneArrType // K
+	//skippingCrystals // k
 
 	// 睡莲叶，z=-1，放在 waterMap 中
 	lilies lilyArrType // l
@@ -106,7 +107,7 @@ var hasWater = false
 
 // 初始化变量、检查地图是否与 const 匹配
 func initMap() {
-	fmt.Println("data 结构体大小:", unsafe.Sizeof(data{}))
+	fmt.Println("data 结构体大小:", unsafe.Sizeof(data{}), "bytes")
 
 	mapSizeN = int8(len(levelMap[0]))
 	mapSizeM = int8(len(levelMap[0][0]))
@@ -606,7 +607,10 @@ type beamInfo struct {
 	endPointDir point
 }
 
+// todo 镜子
 func (d *data) withinBeams(p point, allNonCharObjs []point) (typeMask uint16, beamNf beamInfo) {
+	// todo 前提是钻石在正确位置上
+
 	for _, beam := range d.beams {
 		// beam.dir 高 4 位是类型，低 4 位是方向
 		beamDir := directions6[beam.dir&0xf]
@@ -873,6 +877,7 @@ func (d *data) reflectTo(mirror pointWithDir, dir point, step int, allMovableObj
 	return cur
 }
 
+// 如果只是普通推物品，那么 newDir = math.MaxUint8
 func (d *data) changePos(oldP, newP point, newDir uint8) {
 	// 人
 	if warriorNumberInit > 0 {
@@ -2025,6 +2030,20 @@ func solveLevel() []string {
 			add(d, newData, "x")
 		}
 		doMirrors()
+
+		// 只有当前角色会坐电梯？
+		// todo 多控？
+		doElevator := func(p point) {
+			if mapSizeH == 1 {
+				return
+			}
+			if p.z == 0 && levelMap[p.z][p.x][p.y] == 'e' ||
+				p.z == mapSizeH-1 && levelMap[p.z][p.x][p.y] == 'e' {
+				newData := d
+				newData.changePos(p, point{p.x, p.y, p.z ^ (mapSizeH - 1)}, math.MaxUint8)
+				add(d, newData, "v")
+			}
+		}
 
 		// 移动当前角色
 		switch d.curCharTypeNum {
