@@ -278,7 +278,7 @@ $$
 
 个。
 
-所以找到 $p$ 和 $q$，就能算出合法分割个数。这一结论可以让我们提前跳出循环。
+所以找到 $p$ 和 $q$，就能算出合法分割个数。这一结论可以让我们在计算前后缀 GCD 时，提前跳出循环，减少计算量。
 
 ```py [sol-Python3]
 class Solution:
@@ -422,13 +422,13 @@ public:
         vector<int> pre_gcd(n);
         int g = 0;
         for (int i = 0; i < n; i++) {
-            g = gcd(g, nums[i]);
+            g = __gcd(g, nums[i]); // __gcd 比 gcd 快
             pre_gcd[i] = g;
         }
 
         vector<int> suf_gcd(n + 1);
         for (int i = n - 1; i >= 0; i--) {
-            suf_gcd[i] = gcd(suf_gcd[i + 1], nums[i]);
+            suf_gcd[i] = __gcd(suf_gcd[i + 1], nums[i]);
         }
 
         // 不删任何数
@@ -443,14 +443,14 @@ public:
             }
 
             // 删除 nums[i]
-            int new_g = i ? gcd(pre_gcd[i - 1], suf_gcd[i + 1]) : suf_gcd[i + 1];
+            int new_g = i ? __gcd(pre_gcd[i - 1], suf_gcd[i + 1]) : suf_gcd[i + 1];
 
             g = 0;
             for (int j = 0; j < n; j++) {
                 if (j == i) {
                     continue;
                 }
-                g = gcd(g, nums[j]);
+                g = __gcd(g, nums[j]);
                 if (g == new_g) {
                     p = j;
                     break;
@@ -462,7 +462,7 @@ public:
                 if (j == i) {
                     continue;
                 }
-                g = gcd(g, nums[j]);
+                g = __gcd(g, nums[j]);
                 if (g == new_g) {
                     q = j;
                     break;
