@@ -1,0 +1,12 @@
+# 力扣双周赛 190 题解 - 灵茶山艾府 - 灵神
+
+【如何科学刷题】题单+刷题路线 https://leetcode.cn/discuss/post/3141566/
+本场比赛题解 + Python/Java/C++/Go 代码：
+Q1 https://leetcode.cn/problems/minimum-bishop-moves-to-reach-target/solutions/4019786/o1-shi-jian-zuo-fa-pythonjavacgo-by-endl-3bzt/
+Q2 https://leetcode.cn/problems/maximum-valid-split-positions-i/solutions/4019776/fei-bao-li-zuo-fa-pythonjavacgo-by-endle-3uir/
+Q3 https://leetcode.cn/problems/lexicographically-largest-string-after-pair-transformations/solutions/4019781/wei-yun-suan-jian-ji-xie-fa-pythonjavacg-iad1/
+Q4 https://leetcode.cn/problems/maximum-valid-split-positions-ii/solutions/4019774/zhi-xu-mei-ju-olog-u-ge-shan-chu-wei-zhi-1bc7/
+
+[本题视频讲解](https://www.bilibili.com/video//?t=2m30s)，欢迎点赞关注~
+
+比赛地址：https://leetcode.cn/contest/biweekly-contest-190/

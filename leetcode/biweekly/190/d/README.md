@@ -1,0 +1,290 @@
+## 性质一
+
+数组 $a$ 的有效分割相当于把 $a$ 分割成前缀 $P$ 和后缀 $Q$，使得 
+
+$$
+\gcd(P) = \gcd(Q) = G
+$$
+
+由于
+
+$$
+\gcd(a) = \gcd(P + Q) = \gcd(\gcd(P), \gcd(Q)) = \gcd(G,G) = G
+$$
+
+所以对于 $a$ 的任意有效分割 $P+Q$，都满足
+
+$$
+\gcd(P) = \gcd(Q) = \gcd(a)
+$$
+
+## 性质二
+
+如果我们发现一个元素 $\textit{nums}[i]$ 不改变前缀 GCD，那么删除 $\textit{nums}[i]$，相比不删除，会让得分（有效分割个数）变得更大吗？
+
+设 $\textit{pre}[i]$ 为 $\textit{nums}$ 的前缀 $[0,i]$ 的 GCD。
+
+设 $\textit{suf}[i]$ 为 $\textit{nums}$ 的后缀 $[i,n-1]$ 的 GCD。其中 $n$ 是 $\textit{nums}$ 的长度。
+
+设下标 $k$ 满足 $\textit{pre}[k] = \textit{pre}[k-1]$，那么有
+
+$$
+\gcd(\textit{nums}) = \gcd(\textit{pre}[k], \textit{suf}[k+1]) = \gcd(\textit{pre}[k-1], \textit{suf}[k+1])
+$$
+
+这说明删除 $\textit{nums}[k]$ 不改变整个数组的 GCD。
+
+设 $G = \gcd(\textit{nums})$。根据 GCD 的定义，$\textit{nums}[k]$ 是 $G$ 的倍数。
+
+设删除 $\textit{nums}[k]$ 后的数组为 $a$，其长度为 $n-2$。
+
+考虑 $a$ 的一个有效分割 $(j,j+1)$，满足
+
+$$
+\gcd(a[0,j]) = \gcd(a[j+1,n-2]) = \gcd(a) = G
+$$
+
+如果不删除 $\textit{nums}[k]$，分割 $(j,j+1)$ 是否仍然为有效分割？
+
+把 $\textit{nums}[k]$ 放回 $a$ 中：
+
+- 如果 $\textit{nums}[k]$ 位于前缀中，由于 $\textit{nums}[k]$ 是 $G$ 的倍数，所以 $\gcd(G, \textit{nums}[k]) = G$，说明添加 $\textit{nums}[k]$ 后，前缀 GCD 仍然是 $G$。后缀没变，其 GCD 仍然是 $G$。所以前缀后缀 GCD 仍然相等，分割 $(j,j+1)$ 仍然为有效分割。
+- 如果 $\textit{nums}[k]$ 位于后缀中，同理，分割 $(j,j+1)$ 仍然为有效分割。
+
+**结论**：在 $a$ 中的每个有效分割，都能在 $\textit{nums}$ 中找到与之对应的有效分割。换句话说，$a$ 的得分小于等于 $\textit{nums}$ 的得分。所以无需考虑满足 $\textit{pre}[k] = \textit{pre}[k-1]$ 的下标 $k$。
+
+由此，我们得到一个重要剪枝：
+
+- 如果要删除，只需考虑删除 $\textit{nums}[k]$，满足 $k=0$ 或者 $\textit{pre}[k] \ne \textit{pre}[k-1]$。
+
+> 这样的 $k$ 有多少个？换句话说，前缀 GCD 会变化多少次？
+> 
+> 设前缀 $[0,i-1]$ 的 GCD 为 $g$，考虑前缀 $[0,i]$ 的 GCD，即 $\gcd(g, \textit{nums}[i])$，这是 $g$ 的因子。所以前缀 $[0,i]$ 的 GCD，要么不变仍然为 $g$，要么是 $g$ 的真因子，不超过 $\dfrac{g}{2}$。所以前缀越长，GCD 要么不变，要么至少减半。而一个数至多减半 $\mathcal{O}(\log U)$ 次，其中 $U=\max(\textit{nums})$。所以前缀 GCD 只会变化 $\mathcal{O}(\log U)$ 次。
+
+## 计算得分
+
+对于数组 $a$，如何计算其得分（有效分割个数）？
+
+考虑前后缀分解，先倒序遍历 $a$，算出后缀 GCD $\textit{suf}$。然后正序遍历 $a$，算出前缀 GCD $\textit{pre}$。对于一个分割 $(i,i+1)$，如果发现前缀后缀 GCD 相等，那么把得分加一。最后用得分更新答案的最大值。如果删除了元素，跳过删除的下标。
+
+下午两点 [B站@灵茶山艾府](https://space.bilibili.com/206214) 直播讲题，欢迎关注~
+
+```py [sol-Python3]
+class Solution:
+    def countValidSplit(self, nums: list[int], skip: int) -> int:
+        n = len(nums)
+        # suf[i] 是后缀 [i,n-1]（除去 skip）的 GCD
+        suf = [0] * (n + 1)
+        for j in range(n - 1, -1, -1):
+            if j != skip:
+                suf[j] = gcd(suf[j + 1], nums[j])
+            else:
+                suf[j] = suf[j + 1]
+
+        cnt = pre = 0
+        for j, x in enumerate(nums):
+            if j != skip:
+                pre = gcd(pre, x)
+                # 现在 pre 是前缀 [0,j]（除去 skip）的 GCD
+                if pre == suf[j + 1]:
+                    cnt += 1
+        return cnt
+
+    def maxValidSplits(self, nums: list[int]) -> int:
+        ans = self.countValidSplit(nums, -1)  # 不删除元素
+
+        # countValidSplit 只会调用 O(log max(nums)) 次
+        g = 0
+        for i, x in enumerate(nums):
+            if g > 0 and x % g == 0:  # x 不改变前缀 GCD
+                continue
+            g = gcd(g, x)
+            ans = max(ans, self.countValidSplit(nums, i))
+
+        return ans
+```
+
+```java [sol-Java]
+class Solution {
+    public int maxValidSplits(int[] nums) {
+        int ans = countValidSplit(nums, -1); // 不删除元素
+
+        // countValidSplit 只会调用 O(log max(nums)) 次
+        int g = 0;
+        for (int i = 0; i < nums.length; i++) {
+            int x = nums[i];
+            if (g > 0 && x % g == 0) { // x 不改变前缀 GCD
+                continue;
+            }
+            g = gcd(g, x);
+            ans = Math.max(ans, countValidSplit(nums, i));
+        }
+
+        return ans;
+    }
+
+    private int countValidSplit(int[] nums, int skip) {
+        int n = nums.length;
+        // suf[i] 是后缀 [i,n-1]（除去 skip）的 GCD
+        int[] suf = new int[n + 1];
+        for (int j = n - 1; j >= 0; j--) {
+            if (j != skip) {
+                suf[j] = gcd(suf[j + 1], nums[j]);
+            } else {
+                suf[j] = suf[j + 1];
+            }
+        }
+
+        int pre = 0;
+        int cnt = 0;
+        for (int j = 0; j < n; j++) {
+            if (j != skip) {
+                pre = gcd(pre, nums[j]);
+                // 现在 pre 是前缀 [0,j]（除去 skip）的 GCD
+                if (pre == suf[j + 1]) {
+                    cnt++;
+                }
+            }
+        }
+        return cnt;
+    }
+
+    private int gcd(int a, int b) {
+        while (a != 0) {
+            int tmp = a;
+            a = b % a;
+            b = tmp;
+        }
+        return b;
+    }
+}
+```
+
+```cpp [sol-C++]
+class Solution {
+    int count_valid_split(vector<int>& nums, int skip) {
+        int n = nums.size();
+        // suf[i] 是后缀 [i,n-1]（除去 skip）的 GCD
+        vector<int> suf(n + 1);
+        for (int j = n - 1; j >= 0; j--) {
+            if (j != skip) {
+                suf[j] = gcd(suf[j + 1], nums[j]);
+            } else {
+                suf[j] = suf[j + 1];
+            }
+        }
+
+        int pre = 0;
+        int cnt = 0;
+        for (int j = 0; j < n; j++) {
+            if (j != skip) {
+                pre = gcd(pre, nums[j]);
+                // 现在 pre 是前缀 [0,j]（除去 skip）的 GCD
+                if (pre == suf[j + 1]) {
+                    cnt++;
+                }
+            }
+        }
+        return cnt;
+    }
+
+public:
+    int maxValidSplits(vector<int>& nums) {
+        int ans = count_valid_split(nums, -1); // 不删除元素
+
+        // count_valid_split 只会调用 O(log max(nums)) 次
+        int g = 0;
+        for (int i = 0; i < nums.size(); i++) {
+            int x = nums[i];
+            if (g > 0 && x % g == 0) { // x 不改变前缀 GCD
+                continue;
+            }
+            g = gcd(g, x);
+            ans = max(ans, count_valid_split(nums, i));
+        }
+
+        return ans;
+    }
+};
+```
+
+```go [sol-Go]
+func countValidSplit(nums []int, skip int) (cnt int) {
+	n := len(nums)
+	// suf[i] 是后缀 [i,n-1]（除去 skip）的 GCD
+	suf := make([]int, n+1)
+	for j := n - 1; j >= 0; j-- {
+		if j != skip {
+			suf[j] = gcd(suf[j+1], nums[j])
+		} else {
+			suf[j] = suf[j+1]
+		}
+	}
+
+	pre := 0
+	for j, x := range nums {
+		if j != skip {
+			pre = gcd(pre, x)
+			// 现在 pre 是前缀 [0,j]（除去 skip）的 GCD
+			if pre == suf[j+1] {
+				cnt++
+			}
+		}
+	}
+	return
+}
+
+func maxValidSplits(nums []int) int {
+	ans := countValidSplit(nums, -1) // 不删除元素
+
+	// countValidSplit 只会调用 O(log max(nums)) 次
+	g := 0
+	for i, x := range nums {
+		if g > 0 && x%g == 0 { // x 不改变前缀 GCD
+			continue
+		}
+		g = gcd(g, x)
+		ans = max(ans, countValidSplit(nums, i))
+	}
+
+	return ans
+}
+
+func gcd(a, b int) int {
+	for a != 0 {
+		a, b = b%a, a
+	}
+	return b
+}
+```
+
+#### 复杂度分析
+
+- 时间复杂度：$\mathcal{O}((n+\log U)\log U)$，其中 $n$ 是 $\textit{nums}$ 的长度，$U=\max(\textit{nums})$。我们枚举了 $\mathcal{O}(\log U)$ 个删除位置，每次需要 $\mathcal{O}(n+\log U)$ 的时间计算前后缀 GCD。为什么是 $\mathcal{O}(n+\log U)$？由于前缀（后缀）越长，GCD 要么不变，要么至少减半。一个数至多减半 $\mathcal{O}(\log U)$ 次，所以 $\texttt{countValidSplit}$ 的循环次数是 $\mathcal{O}(n + \log U)$。
+- 空间复杂度：$\mathcal{O}(n)$。
+
+## 专题训练
+
+1. 动态规划题单的「**专题：前后缀分解**」。
+2. 位运算题单的「**GCD LogTrick**」。
+
+## 分类题单
+
+[如何科学刷题？](https://leetcode.cn/discuss/post/3141566/ru-he-ke-xue-shua-ti-by-endlesscheng-q3yd/)
+
+1. [滑动窗口与双指针（定长/不定长/单序列/双序列/三指针/分组循环）](https://leetcode.cn/discuss/post/3578981/ti-dan-hua-dong-chuang-kou-ding-chang-bu-rzz7/)
+2. [二分算法（二分答案/最小化最大值/最大化最小值/第K小）](https://leetcode.cn/discuss/post/3579164/ti-dan-er-fen-suan-fa-er-fen-da-an-zui-x-3rqn/)
+3. [单调栈（基础/矩形面积/贡献法/最小字典序）](https://leetcode.cn/discuss/post/3579480/ti-dan-dan-diao-zhan-ju-xing-xi-lie-zi-d-u4hk/)
+4. [网格图（DFS/BFS/综合应用）](https://leetcode.cn/discuss/post/3580195/fen-xiang-gun-ti-dan-wang-ge-tu-dfsbfszo-l3pa/)
+5. [位运算（基础/性质/拆位/试填/恒等式/思维）](https://leetcode.cn/discuss/post/3580371/fen-xiang-gun-ti-dan-wei-yun-suan-ji-chu-nth4/)
+6. [图论算法（DFS/BFS/拓扑排序/基环树/最短路/最小生成树/网络流）](https://leetcode.cn/discuss/post/3581143/fen-xiang-gun-ti-dan-tu-lun-suan-fa-dfsb-qyux/)
+7. [动态规划（入门/背包/划分/状态机/区间/状压/数位/数据结构优化/树形/博弈/概率期望）](https://leetcode.cn/discuss/post/3581838/fen-xiang-gun-ti-dan-dong-tai-gui-hua-ru-007o/)
+8. [常用数据结构（前缀和/差分/栈/队列/堆/字典树/并查集/树状数组/线段树）](https://leetcode.cn/discuss/post/3583665/fen-xiang-gun-ti-dan-chang-yong-shu-ju-j-bvmv/)
+9. [数学算法（数论/组合/概率期望/博弈/计算几何/随机算法）](https://leetcode.cn/discuss/post/3584388/fen-xiang-gun-ti-dan-shu-xue-suan-fa-shu-gcai/)
+10. [贪心与思维（基本贪心策略/反悔/区间/字典序/数学/思维/脑筋急转弯/构造）](https://leetcode.cn/discuss/post/3091107/fen-xiang-gun-ti-dan-tan-xin-ji-ben-tan-k58yb/)
+11. [链表、树与回溯（前后指针/快慢指针/DFS/BFS/直径/LCA）](https://leetcode.cn/discuss/post/3142882/fen-xiang-gun-ti-dan-lian-biao-er-cha-sh-6srp/)
+12. [字符串（KMP/Z函数/Manacher/字符串哈希/AC自动机/后缀数组/子序列自动机）](https://leetcode.cn/discuss/post/3144832/fen-xiang-gun-ti-dan-zi-fu-chuan-kmpzhan-ugt4/)
+
+[我的题解精选（已分类）](https://github.com/EndlessCheng/codeforces-go/blob/master/leetcode/SOLUTIONS.md)
+
+欢迎关注 [B站@灵茶山艾府](https://space.bilibili.com/206214)
