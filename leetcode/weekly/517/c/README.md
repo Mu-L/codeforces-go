@@ -18,7 +18,7 @@
 
 分组背包只需在 0-1 背包的基础上，把「选或不选」改成「**枚举选这一组内的哪个物品，或者一个都不选**」。
 
-下午两点 [B站@灵茶山艾府](https://space.bilibili.com/206214) 直播讲题，欢迎关注~
+[本题视频讲解](https://www.bilibili.com/video/BV1NV4X6bEhr/?t=6m5s)，欢迎点赞关注~
 
 ```py [sol-Python3]
 class Solution:
@@ -44,6 +44,39 @@ class Solution:
                     a -= 1
 
         return -1 if f[sum] == inf else f[sum]
+```
+
+```py [sol-Python3 记忆化搜索]
+class Solution:
+    def minOperations(self, nums: list[int], sum: int) -> int:
+        @cache
+        def dfs(i: int, s: int) -> int:
+            if s == 0:  # 无需操作
+                return 0
+            if i < 0:  # 不足 sum，不合法
+                return inf
+
+            # 这一组一个也不选
+            res = dfs(i - 1, s)
+
+            x = nums[i]
+            a = 0
+            while x << a <= s:
+                # 物品体积为 x<<a，价值为 a
+                res = min(res, dfs(i - 1, s - (x << a)) + a)
+                a += 1
+
+            # 从小到大枚举 x>>a，方便在 x>>a > i 时跳出循环
+            a = x.bit_length() - 1
+            while a > 0 and x >> a <= s:
+                # 物品体积为 x>>a，价值为 a
+                res = min(res, dfs(i - 1, s - (x >> a)) + a)
+                a -= 1
+
+            return res
+
+        ans = dfs(len(nums) - 1, sum)
+        return -1 if ans == inf else ans
 ```
 
 ```java [sol-Java]

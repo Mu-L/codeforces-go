@@ -1,3 +1,5 @@
+推荐先完成更简单的 [4040. 构造子集和的最少操作次数 I](https://leetcode.cn/problems/minimum-operations-to-form-subset-sum-i/)，[我的题解](https://leetcode.cn/problems/minimum-operations-to-form-subset-sum-i/solution/fen-zu-bei-bao-pythonjavacgo-by-endlessc-o7ao/)。
+
 由于 $x$ 先乘一次再除一次，$x$ 不变，所以乘法操作后面跟着除法操作是没有意义的，白白浪费操作次数。
 
 所以对于同一个数，最优操作顺序为：
@@ -28,7 +30,7 @@ $$
 
 分组背包只需在 0-1 背包的基础上，把「选或不选」改成「**枚举选这一组内的哪个物品，或者一个都不选**」。
 
-下午两点 [B站@灵茶山艾府](https://space.bilibili.com/206214) 直播讲题，欢迎关注~
+[本题视频讲解](https://www.bilibili.com/video/BV1NV4X6bEhr/?t=6m5s)，欢迎点赞关注~
 
 ## 优化前
 
@@ -58,7 +60,7 @@ class Solution:
 class Solution {
     public int minOperations(int[] nums, int sum) {
         int[] f = new int[sum + 1];
-        Arrays.fill(f, Integer.MAX_VALUE / 2);
+        Arrays.fill(f, Integer.MAX_VALUE / 2); // 避免加法溢出
         f[0] = 0;
 
         for (int x : nums) {
@@ -83,7 +85,7 @@ class Solution {
 class Solution {
 public:
     int minOperations(vector<int>& nums, int sum) {
-        vector<int> f(sum + 1, INT_MAX / 2);
+        vector<int> f(sum + 1, INT_MAX / 2); // 避免加法溢出
         f[0] = 0;
 
         for (int x : nums) {
@@ -108,7 +110,7 @@ public:
 func minOperations(nums []int, sum int) int {
 	f := make([]int, sum+1)
 	for i := 1; i <= sum; i++ {
-		f[i] = math.MaxInt / 2
+		f[i] = math.MaxInt / 2 // 避免加法溢出
 	}
 
 	for _, x := range nums {
@@ -140,7 +142,9 @@ func minOperations(nums []int, sum int) int {
 
 对于 $x = \textit{nums}[i]$，$\left\lfloor\dfrac{x}{2^a}\right\rfloor 2^b$ 可能有重复值，例如 $x=6$ 先除以 $2$ 再乘以 $2$ 还是 $6$，所以 $a=b=1$ 与 $a=b=0$ 这两个物品体积相同。我们可以先生成所有不同的 $\left\lfloor\dfrac{x}{2^a}\right\rfloor 2^b$，如果有相同的 $\left\lfloor\dfrac{x}{2^a}\right\rfloor 2^b$，只保留 $a+b$ 小的。然后再枚举这一组物品，计算转移。
 
-```py
+> **注**：实际上，按照代码的循环顺序，首次把 key 插入哈希表时的 value 就是最小的。
+
+```py [sol-Python3]
 class Solution:
     def minOperations(self, nums: list[int], sum: int) -> int:
         f = [0] + [inf] * sum
@@ -164,7 +168,40 @@ class Solution:
                 for v, c in items:
                     if v > i:
                         break
-                    f[i] = min(f[i], f[i - v] + c)
+                    f[i] = min(f[i], f[i - v] + c)  # 手写 min 更快，见【Python3 更快的写法】
+
+        return -1 if f[sum] == inf else f[sum]
+```
+
+```py [sol-Python3 更快的写法]
+class Solution:
+    def minOperations(self, nums: list[int], sum: int) -> int:
+        f = [0] + [inf] * sum
+
+        for x in nums:
+            costs = {}
+            a = 0
+            while x >> a:
+                b = 0
+                while x >> a << b <= sum:
+                    v = x >> a << b
+                    if v not in costs:
+                        costs[v] = a + b
+                    b += 1
+                a += 1
+
+            # 按照体积从小到大排序，方便跳出循环
+            items = sorted(costs.items())
+
+            for i in range(sum, 0, -1):
+                mn = f[i]  # 避免在循环中反复访问 list
+                for v, c in items:
+                    if v > i:
+                        break
+                    tmp = f[i - v] + c
+                    if tmp < mn:  # 手写 min
+                        mn = tmp
+                f[i] = mn
 
         return -1 if f[sum] == inf else f[sum]
 ```
