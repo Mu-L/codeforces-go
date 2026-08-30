@@ -36,9 +36,9 @@ $$
 
 设 $G = \gcd(\textit{nums})$。根据 GCD 的定义，$\textit{nums}[k]$ 是 $G$ 的倍数。
 
-设删除 $\textit{nums}[k]$ 后的数组为 $a$，其长度为 $n-2$。
+设删除 $\textit{nums}[k]$ 后的数组为 $a$，其长度为 $n-1$。
 
-考虑 $a$ 的一个有效分割 $(j,j+1)$，满足
+考虑 $a$ 的一个有效分割 $(j,j+1)$，我们有
 
 $$
 \gcd(a[0,j]) = \gcd(a[j+1,n-2]) = \gcd(a) = G
@@ -65,13 +65,13 @@ $$
 
 对于数组 $a$，如何计算其得分（有效分割个数）？
 
-考虑前后缀分解，先倒序遍历 $a$，算出后缀 GCD $\textit{suf}$。然后正序遍历 $a$，算出前缀 GCD $\textit{pre}$。对于一个分割 $(i,i+1)$，如果发现前缀后缀 GCD 相等，那么把得分加一。最后用得分更新答案的最大值。如果删除了元素，跳过删除的下标。
+考虑前后缀分解，先倒序遍历 $a$，算出后缀 GCD $\textit{suf}$。然后正序遍历 $a$，算出前缀 GCD $\textit{pre}$。对于一个分割 $(i,i+1)$，如果发现 $\textit{pre}[i] = \textit{suf}[i+1]$，那么把得分加一。
 
 下午两点 [B站@灵茶山艾府](https://space.bilibili.com/206214) 直播讲题，欢迎关注~
 
 ```py [sol-Python3]
 class Solution:
-    def countValidSplit(self, nums: list[int], skip: int) -> int:
+    def count_valid_splits(self, nums: list[int], skip: int) -> int:
         n = len(nums)
         # suf[i] 是后缀 [i,n-1]（除去 skip）的 GCD
         suf = [0] * (n + 1)
@@ -91,15 +91,15 @@ class Solution:
         return cnt
 
     def maxValidSplits(self, nums: list[int]) -> int:
-        ans = self.countValidSplit(nums, -1)  # 不删除元素
+        ans = self.count_valid_splits(nums, -1)  # 不删除元素
 
-        # countValidSplit 只会调用 O(log max(nums)) 次
+        # count_valid_splits 只会调用 O(log max(nums)) 次
         g = 0
         for i, x in enumerate(nums):
             if g > 0 and x % g == 0:  # x 不改变前缀 GCD
-                continue
+                continue  # 把 x 删了 ans 也不会变大
             g = gcd(g, x)
-            ans = max(ans, self.countValidSplit(nums, i))
+            ans = max(ans, self.count_valid_splits(nums, i))  # 删 x
 
         return ans
 ```
@@ -107,23 +107,23 @@ class Solution:
 ```java [sol-Java]
 class Solution {
     public int maxValidSplits(int[] nums) {
-        int ans = countValidSplit(nums, -1); // 不删除元素
+        int ans = countValidSplits(nums, -1); // 不删除元素
 
-        // countValidSplit 只会调用 O(log max(nums)) 次
+        // countValidSplits 只会调用 O(log max(nums)) 次
         int g = 0;
         for (int i = 0; i < nums.length; i++) {
             int x = nums[i];
             if (g > 0 && x % g == 0) { // x 不改变前缀 GCD
-                continue;
+                continue; // 把 x 删了 ans 也不会变大
             }
             g = gcd(g, x);
-            ans = Math.max(ans, countValidSplit(nums, i));
+            ans = Math.max(ans, countValidSplits(nums, i)); // 删 x
         }
 
         return ans;
     }
 
-    private int countValidSplit(int[] nums, int skip) {
+    private int countValidSplits(int[] nums, int skip) {
         int n = nums.length;
         // suf[i] 是后缀 [i,n-1]（除去 skip）的 GCD
         int[] suf = new int[n + 1];
@@ -162,7 +162,7 @@ class Solution {
 
 ```cpp [sol-C++]
 class Solution {
-    int count_valid_split(vector<int>& nums, int skip) {
+    int count_valid_splits(vector<int>& nums, int skip) {
         int n = nums.size();
         // suf[i] 是后缀 [i,n-1]（除去 skip）的 GCD
         vector<int> suf(n + 1);
@@ -190,17 +190,17 @@ class Solution {
 
 public:
     int maxValidSplits(vector<int>& nums) {
-        int ans = count_valid_split(nums, -1); // 不删除元素
+        int ans = count_valid_splits(nums, -1); // 不删除元素
 
-        // count_valid_split 只会调用 O(log max(nums)) 次
+        // count_valid_splits 只会调用 O(log max(nums)) 次
         int g = 0;
         for (int i = 0; i < nums.size(); i++) {
             int x = nums[i];
             if (g > 0 && x % g == 0) { // x 不改变前缀 GCD
-                continue;
+                continue; // 把 x 删了 ans 也不会变大
             }
             g = gcd(g, x);
-            ans = max(ans, count_valid_split(nums, i));
+            ans = max(ans, count_valid_splits(nums, i)); // 删 x
         }
 
         return ans;
@@ -209,7 +209,7 @@ public:
 ```
 
 ```go [sol-Go]
-func countValidSplit(nums []int, skip int) (cnt int) {
+func countValidSplits(nums []int, skip int) (cnt int) {
 	n := len(nums)
 	// suf[i] 是后缀 [i,n-1]（除去 skip）的 GCD
 	suf := make([]int, n+1)
@@ -235,16 +235,16 @@ func countValidSplit(nums []int, skip int) (cnt int) {
 }
 
 func maxValidSplits(nums []int) int {
-	ans := countValidSplit(nums, -1) // 不删除元素
+	ans := countValidSplits(nums, -1) // 不删除元素
 
-	// countValidSplit 只会调用 O(log max(nums)) 次
+	// countValidSplits 只会调用 O(log max(nums)) 次
 	g := 0
 	for i, x := range nums {
 		if g > 0 && x%g == 0 { // x 不改变前缀 GCD
-			continue
+			continue // 把 x 删了 ans 也不会变大
 		}
 		g = gcd(g, x)
-		ans = max(ans, countValidSplit(nums, i))
+		ans = max(ans, countValidSplits(nums, i)) // 删 x
 	}
 
 	return ans
@@ -260,7 +260,7 @@ func gcd(a, b int) int {
 
 #### 复杂度分析
 
-- 时间复杂度：$\mathcal{O}((n+\log U)\log U)$，其中 $n$ 是 $\textit{nums}$ 的长度，$U=\max(\textit{nums})$。我们枚举了 $\mathcal{O}(\log U)$ 个删除位置，每次需要 $\mathcal{O}(n+\log U)$ 的时间计算前后缀 GCD。为什么是 $\mathcal{O}(n+\log U)$？由于前缀（后缀）越长，GCD 要么不变，要么至少减半。一个数至多减半 $\mathcal{O}(\log U)$ 次，所以 $\texttt{countValidSplit}$ 的循环次数是 $\mathcal{O}(n + \log U)$。
+- 时间复杂度：$\mathcal{O}((n+\log U)\log U)$，其中 $n$ 是 $\textit{nums}$ 的长度，$U=\max(\textit{nums})$。我们枚举了 $\mathcal{O}(\log U)$ 个删除位置，每次需要 $\mathcal{O}(n+\log U)$ 的时间计算前后缀 GCD。为什么是 $\mathcal{O}(n+\log U)$？由于前缀（后缀）越长，GCD 要么不变，要么至少减半。一个数至多减半 $\mathcal{O}(\log U)$ 次，所以 $\texttt{countValidSplits}$ 的循环次数是 $\mathcal{O}(n + \log U)$。
 - 空间复杂度：$\mathcal{O}(n)$。
 
 ## 专题训练

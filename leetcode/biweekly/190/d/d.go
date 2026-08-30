@@ -1,9 +1,9 @@
 package main
 
 // https://space.bilibili.com/206214
-func countValidSplit(nums []int, skip int) (cnt int) {
+func countValidSplits(nums []int, skip int) (cnt int) {
 	n := len(nums)
-	// suf[i] 表示后缀 [i,n-1]（除去 skip）的 GCD
+	// suf[i] 是后缀 [i,n-1]（除去 skip）的 GCD
 	suf := make([]int, n+1)
 	for j := n - 1; j >= 0; j-- {
 		if j != skip {
@@ -27,16 +27,16 @@ func countValidSplit(nums []int, skip int) (cnt int) {
 }
 
 func maxValidSplits(nums []int) int {
-	ans := countValidSplit(nums, -1) // 不删除元素
+	ans := countValidSplits(nums, -1) // 不删除元素
 
-	// countValidSplit 只会调用 O(log max(nums)) 次
+	// countValidSplits 只会调用 O(log max(nums)) 次
 	g := 0
 	for i, x := range nums {
 		if g > 0 && x%g == 0 { // x 不改变前缀 GCD
-			continue
+			continue // 把 x 删了 ans 也不会变大
 		}
 		g = gcd(g, x)
-		ans = max(ans, countValidSplit(nums, i))
+		ans = max(ans, countValidSplits(nums, i)) // 删 x
 	}
 
 	return ans
