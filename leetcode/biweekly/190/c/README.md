@@ -10,9 +10,9 @@ $$
 
 个字母 $\texttt{z}$。
 
-从 $x$ 中减去消耗的 $\texttt{a}$ 个数后，从 $\texttt{y}$ 到 $\texttt{a}$ 倒着思考。此时每种字母至多只能有一个，如果 $x$ 二进制从低到高第 $k$ 位是 $1$，那么就有第 $k$ 个小写字母，否则没有。
+接下来，从 $\texttt{y}$ 到 $\texttt{a}$ 倒着思考。此时每种字母至多只能有一个，如果 $x$ 二进制从低到高第 $k$ 位是 $1$，那么就有第 $k$ 个小写字母，否则没有。
 
-下午两点 [B站@灵茶山艾府](https://space.bilibili.com/206214) 直播讲题，欢迎关注~
+[本题视频讲解](https://www.bilibili.com/video/BV12g4X68EMH/?t=4m4s)，欢迎点赞关注~
 
 ```py [sol-Python3]
 class Solution:
@@ -37,7 +37,7 @@ class Solution {
         for (int idx = 0; idx < n; idx++) {
             int x = nums[idx];
             // 单独处理 'z'
-            StringBuilder s = new StringBuilder("z".repeat(x >> 25));
+            StringBuilder s = new StringBuilder().repeat('z', x >> 25);
             // 然后从 'y' 到 'a'
             for (int i = Math.min(24, 31 - Integer.numberOfLeadingZeros(x)); i >= 0; i--) {
                 if ((x >> i & 1) > 0) { // x 的 i 位是 1，所以有字母 i

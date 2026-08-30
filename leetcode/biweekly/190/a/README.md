@@ -2,7 +2,7 @@
 
 否则一定有解。如果两点之间的直线斜率为 $-1$ 或者 $1$，那么一步可达，否则需要两步。
 
-下午两点 [B站@灵茶山艾府](https://space.bilibili.com/206214) 直播讲题，欢迎关注~
+[本题视频讲解](https://www.bilibili.com/video/BV12g4X68EMH/)，欢迎点赞关注~
 
 ```py [sol-Python3]
 class Solution:

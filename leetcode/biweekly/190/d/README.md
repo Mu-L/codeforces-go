@@ -67,7 +67,7 @@ $$
 
 考虑前后缀分解，先倒序遍历 $a$，算出后缀 GCD $\textit{suf}$。然后正序遍历 $a$，算出前缀 GCD $\textit{pre}$。对于一个分割 $(i,i+1)$，如果发现 $\textit{pre}[i] = \textit{suf}[i+1]$，那么把得分加一。
 
-下午两点 [B站@灵茶山艾府](https://space.bilibili.com/206214) 直播讲题，欢迎关注~
+[本题视频讲解](https://www.bilibili.com/video/BV12g4X68EMH/?t=9m42s)，欢迎点赞关注~
 
 ```py [sol-Python3]
 class Solution:
