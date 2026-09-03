@@ -10,36 +10,17 @@ func cf659G(in io.Reader, out io.Writer) {
 	const mod = 1_000_000_007
 	var n int
 	Fscan(in, &n)
-	a := make([]int, n)
-	for i := range a {
+	a := make([]int, n+2)
+	for i := 1; i <= n; i++ {
 		Fscan(in, &a[i])
+		a[i]--
 	}
 
 	ans := 0
 	f := 0
-	for i, v := range a {
-		ans += v - 1
-		if i > 0 {
-			ans += f * (min(a[i-1], v) - 1) % mod
-		}
-		if i == n-1 {
-			continue
-		}
-		r := a[i+1]
-		if v <= r {
-			if i == 0 || a[i-1] >= v {
-				f = (f + 1) * (v - 1)
-			} else {
-				f = f*(a[i-1]-1) + v - 1
-			}
-		} else {
-			if i == 0 || a[i-1] >= v || a[i-1] >= r {
-				f = (f + 1) * (r - 1)
-			} else {
-				f = f*(a[i-1]-1) + r - 1
-			}
-		}
-		f %= mod
+	for i := 1; i <= n; i++ {
+		ans += f*min(a[i-1], a[i])%mod + a[i]
+		f = (f*min(a[i-1], a[i], a[i+1]) + min(a[i], a[i+1])) % mod
 	}
 	Fprint(out, ans%mod)
 }
